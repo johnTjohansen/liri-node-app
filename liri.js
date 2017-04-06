@@ -1,33 +1,60 @@
-var request = require("request");
-var Twitter = require('twitter');
+var omdb = require("omdb");
+var Twitter = require("./keys.js");
 var spotify = require('spotify');
-var rotten = require('rotten-api')("YOU_API_KEY");
+//var rotten = require('rotten-api')("YOU_API_KEY");
 
 var inputArgs = process.argv;
 var whatToDo = inputArgs[2];
+var songMovie = inputArgs[3].splice;
 
+switch(whatToDo) {
+	case "my-tweets":
+		getTweets();
+		break;
+	case "spotify-this-song":
+		getSong();
+		break;
+	case "movie-this":
+		getMovieInfo();
+		break;
+	case "do-what-it-says":
+		getDoer();
+		break;
+	default;
 
+}
 
-var params = {screen_name: 'nodejs'};
-client.get('statuses/user_timeline', params, function(error, tweets, response) {
-  if (!error) {
-    console.log(tweets);
-  }
-});
+function getSong() { 
+	if (songMovie = "") {
+		songMovie = "The Sign";
+	};
 
-spotify.search({ type: 'track', query: 'the sign' }, function(err, data) {
+	spotify.search({ type: 'track', query: songMovie }, function(err, data) {
     if ( err ) {
         console.log('Error occurred: ' + err);
         return;
     }
  
-    // Do something with 'data' 
-});
+};
 
+// get information about entered movie title
+function getTweets() {
+	var params = {screen_name: 'nodejs'};
+	client.get('statuses/user_timeline', params, function(error, tweets, response) {
+  		if (!error) {
+   		   console.log(tweets);
+ 		 }
+	});
+};
+
+// get information about entered movie title
 function getMovieInfo() { 
-	request("https://www.omdbapi.com/?t=Mr+Nobody&y=&plot=short&&r=json", function(error, response, body) {
-		if (!error && response.statusCode === 200) {
-			var omdbRec = JSON.parse(body);
+	if (songMovie = "") {
+		songMovie = "Mr Nobody";
+	};
+	omdb.search(songMovie, function(error, movies) {
+		if (!error) {
+			var omdbRec = JSON.parse(movies);
 			console.log("Title: " + omdbRec.title);
 			console.log("Released: " + omdbRec.year);
 			console.log("IMDB Rating: " + omdbRec.imdbRating);
@@ -40,7 +67,8 @@ function getMovieInfo() {
 					console.log("Rotten Tomatoes Rating: " + omdbRec.Ratings[i].Value);
 				};
 			};
-			var imdbId = omdbRec.imdbID;
+			console.log("Rotten Tomatoes URL: not available");
+			/*var imdbId = omdbRec.imdbID;
 			rotten.alias(imdbId, function (err, res) {
 			    if (!err) {
 				   var rotRec = JSON.parse(res);
@@ -49,9 +77,9 @@ function getMovieInfo() {
      			} else {
      			   console.log("Error in Rotten Tomatoes call");
      			};   				 
-			});
+			});*/
 		} else {
 			console.log("Error in OMDB call");
 		};
-	});
+	};
 };
