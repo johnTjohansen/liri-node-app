@@ -33,7 +33,9 @@ function getSong() {
     if ( err ) {
         console.log('Error occurred: ' + err);
         return;
-    }
+    } else {
+    	console.log('spotify info ' + data);
+    };
  
 };
 
@@ -43,7 +45,7 @@ function getTweets() {
 	client.get('statuses/user_timeline', params, function(error, tweets, response) {
   		if (!error) {
    		   console.log(tweets);
- 		 }
+ 		}; 
 	});
 };
 
