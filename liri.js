@@ -89,7 +89,7 @@ function getMovieInfo() {
 	};
 	//console.log("Movie entered " + songMovie);
 
-	var queryUrl = "http://www.omdbapi.com/?t=" + songMovie + "&y=&plot=short&tomatoes=true&r=json";
+	var queryUrl = "https://www.omdbapi.com/?t=" + songMovie + "&y=&plot=short&tomatoes=true&r=json";
 
 	request(queryUrl, function(error, response, body) {
   		if (!error && response.statusCode === 200) {
