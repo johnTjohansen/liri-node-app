@@ -1,64 +1,101 @@
-var omdb = require("omdb");
-var Twitter = require("./keys.js");
+
+var request = require("request");
 var spotify = require('spotify');
-//var rotten = require('rotten-api')("YOU_API_KEY");
+var fs = require('fs');
+var Twitter = require("twitter");
+
+var twitKey = require("./keys.js");
+var client = new Twitter(twitKey.twitterKeys);
 
 var inputArgs = process.argv;
 var whatToDo = inputArgs[2];
-var songMovie = inputArgs[3].splice;
+var songMovie = inputArgs.slice(3);
 
-switch(whatToDo) {
-	case "my-tweets":
-		getTweets();
-		break;
-	case "spotify-this-song":
-		getSong();
-		break;
-	case "movie-this":
-		getMovieInfo();
-		break;
-	case "do-what-it-says":
-		getDoer();
-		break;
-	default;
+directIt(whatToDo);
 
-}
-
-function getSong() { 
-	if (songMovie = "") {
-		songMovie = "The Sign";
+//--------------------Functions-------------------------------- 
+// route the requested service to its function
+function directIt(play) { 
+	switch(play) {
+		case "my-tweets":
+			getTweets();
+			break;
+		case "spotify-this-song":
+			getSong();
+			break;
+		case "movie-this":
+			getMovieInfo();
+			break;
+		case "do-what-it-says":
+			getDoer();
+			break;
+		default:
+			console.log("Invalid option");
 	};
-
-	spotify.search({ type: 'track', query: songMovie }, function(err, data) {
-    if ( err ) {
-        console.log('Error occurred: ' + err);
-        return;
-    } else {
-    	console.log('spotify info ' + data);
-    };
- 
 };
-
-// get information about entered movie title
+//-----------------------------------
+// get last Twitter tweets
 function getTweets() {
-	var params = {screen_name: 'nodejs'};
+	var params = { screen_name: 'SunshineFarty', count: 20 };
+	//console.log(client);
+
+	//use the Twitter npm to retrieve & display last 20 tweets
 	client.get('statuses/user_timeline', params, function(error, tweets, response) {
   		if (!error) {
-   		   console.log(tweets);
+  			var twits = [];  //array to hold tweets
+      		for (var i = 0; i < tweets.length; i++) {
+        		twits.push({
+            		'created at: ' : tweets[i].created_at,
+            		'Tweets: ' : tweets[i].text
+        		});
+      		}
+      		console.log(twits);
+ 		} else {
+ 			console.log("Failure on twitter " + JSON.stringify(error));
  		}; 
 	});
 };
+//-----------------------------------
+// get song info from Spotify
+function getSong() { 
+	//console.log("songMovie is " + songMovie);
+	if (songMovie == "") {
+	    //console.log("song not entered - using default")
+		songMovie = "The Sign";
+	};
+	//console.log("songMovie is " + songMovie);
 
-// get information about entered movie title
+	//find the song that was entered on the command line and report song info
+	spotify.search({ type: 'track', query: songMovie, limit: 1 }, function(err, data) {
+    	if ( err ) { 
+        	console.log('Error occurred: ' + JSON.stringify(err));
+       	    return;
+    	} else {
+    		var songInfo = data.tracks.items[0];
+    		//console.log("spotify data " + JSON.stringify(songInfo));
+    		console.log("Artist: " + songInfo.artists[0].name);
+    		console.log("Song name: " + songInfo.name);
+    		console.log("Preview link: " + songInfo.preview_url);
+    		console.log("Album: " + songInfo.album.name);
+   		};
+	});
+};
+//-------------------------------------------
+// get information about entered movie title from OMDB
 function getMovieInfo() { 
-	if (songMovie = "") {
+	//console.log("Movie entered " + songMovie);
+	if (songMovie == "") {
 		songMovie = "Mr Nobody";
 	};
-	omdb.search(songMovie, function(error, movies) {
-		if (!error) {
-			var omdbRec = JSON.parse(movies);
-			console.log("Title: " + omdbRec.title);
-			console.log("Released: " + omdbRec.year);
+	//console.log("Movie entered " + songMovie);
+
+	var queryUrl = "http://www.omdbapi.com/?t=" + songMovie + "&y=&plot=short&tomatoes=true&r=json";
+
+	request(queryUrl, function(error, response, body) {
+  		if (!error && response.statusCode === 200) {
+			var omdbRec = JSON.parse(body);
+			console.log("Title: " + omdbRec.Title);
+			console.log("Released: " + omdbRec.Year);
 			console.log("IMDB Rating: " + omdbRec.imdbRating);
 			console.log("Country: " + omdbRec.Country);
 			console.log("Language: " + omdbRec.Language);
@@ -69,19 +106,21 @@ function getMovieInfo() {
 					console.log("Rotten Tomatoes Rating: " + omdbRec.Ratings[i].Value);
 				};
 			};
-			console.log("Rotten Tomatoes URL: not available");
-			/*var imdbId = omdbRec.imdbID;
-			rotten.alias(imdbId, function (err, res) {
-			    if (!err) {
-				   var rotRec = JSON.parse(res);
-   			       var rotURL = rotRec.links.self;
-   			       console.log("Rotten Tomatoes URL: " + rotURL);
-     			} else {
-     			   console.log("Error in Rotten Tomatoes call");
-     			};   				 
-			});*/
+			console.log("Rotten Tomatoes URL: " + omdbRec.tomatoURL);
 		} else {
 			console.log("Error in OMDB call");
 		};
-	};
+	});
+};
+//----------------------------------------
+// for the 'do what it says' option
+function getDoer() {
+	fs.readFile("random.txt", "utf8", function(err, data) {
+		var splitData = data.split(",");
+		whatToDo = splitData[0];
+		songMovie = splitData[1];
+		//console.log("whatToDo " + whatToDo + " and songMovie " + songMovie);
+		directIt(whatToDo);
+	})
+	
 };
